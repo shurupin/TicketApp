@@ -1,5 +1,12 @@
 namespace TicketApp
-{ 
+{
+    using DataAccess;
+
+    using Microsoft.AspNetCore.Identity;
+    using Microsoft.EntityFrameworkCore;
+
+    using Models.Database;
+
     using NextjsStaticHosting.AspNetCore;
 
     public class Program
@@ -14,6 +21,18 @@ namespace TicketApp
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            // Authentication and authorization
+            builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme);
+            builder.Services.AddAuthorizationBuilder();
+
+            // Database TODO: apply postgres:
+            //builder.Services.AddDbContext<AppDbContext>(x => x.UseSqlite("DataSource=app.db"));
+
+            // Add Registration and Authorization API Endpoints
+            builder.Services.AddIdentityCore<User>()
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddApiEndpoints();
 
             // Step 1: Add Next.js hosting support
             builder.Services.Configure<NextjsStaticHostingOptions>(builder.Configuration.GetSection("NextjsStaticHosting"));
@@ -30,8 +49,8 @@ namespace TicketApp
 
             app.UseHttpsRedirection();
 
-            app.UseAuthorization();
-
+            app.UseAuthorization();//TODO: to check is app.UseAuthorization() needed?
+            app.MapIdentityApi<User>();
 
             app.MapControllers();
 
