@@ -9,4 +9,9 @@
     <PackageReference Include="NextjsStaticHosting.AspNetCore" Version="0.9.2-preview" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="ClientApp\out\**\*.*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
