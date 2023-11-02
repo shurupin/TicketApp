@@ -12,7 +12,7 @@ using TicketApp.DataAccess;
 namespace TicketApp.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20231102092217_InitialCreate")]
+    [Migration("20231102220712_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
