@@ -40,3 +40,6 @@ In VS2022 open View->Other Windows->Package Manager Console:
 
 ## Remove the latest migration:
 `dotnet ef migrations remove --project .\TicketApp\TicketApp.csproj`
+
+## GenericRepository Documentation
+https://github.com/TanvirArjel/EFCore.GenericRepository/wiki

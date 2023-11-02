@@ -1,5 +1,7 @@
 namespace TicketApp
 {
+    using Configurations;
+
     using DataAccess;
 
     using Microsoft.AspNetCore.Identity;
@@ -8,6 +10,8 @@ namespace TicketApp
     using Models.Database;
 
     using NextjsStaticHosting.AspNetCore;
+
+    using TanvirArjel.EFCore.GenericRepository;
 
     public class Program
     {
@@ -32,7 +36,13 @@ namespace TicketApp
                 optionsAction: optionsAction => optionsAction.UseNpgsql(
                     connectionString: configuration.GetConnectionString(name: "DefaultConnection")));
 
-            // Add Registration and Authorization API Endpoints
+            // Repository
+            builder.Services.AddGenericRepository<AppDbContext>();
+
+            // Dependency Injection and Services
+            builder.Services.AddDependencyInjectionConfiguration();
+
+            // Registration and Authorization API Endpoints
             builder.Services.AddIdentityCore<User>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddApiEndpoints();
