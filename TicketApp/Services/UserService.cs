@@ -1,5 +1,6 @@
 ﻿namespace TicketApp.Services
 {
+    using System.ComponentModel.DataAnnotations;
     using TanvirArjel.EFCore.GenericRepository;
     using TicketApp.Models.Database;
 
@@ -19,8 +20,10 @@
 
         public async Task<User?> GetUserByEmailAsync(string email)
         {
-            if (string.IsNullOrEmpty(email))
+            if (string.IsNullOrWhiteSpace(email) && new EmailAddressAttribute().IsValid(email))
+            {
                 throw new ArgumentException("Email cannot be null or empty", nameof(email));
+            }
 
             User? user = await this._repository.GetAsync<User>(x => x.Email.ToLower() == email.ToLower());
             return user;

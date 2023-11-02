@@ -1,10 +1,8 @@
 namespace TicketApp.Controllers
 {
-    using System.ComponentModel.DataAnnotations;
-
     using Microsoft.AspNetCore.Mvc;
-
     using Models.Database;
+    using System.ComponentModel.DataAnnotations;
     using TicketApp.Services;
 
     [ApiController]
@@ -20,16 +18,12 @@ namespace TicketApp.Controllers
             this._logger = logger;
         }
 
+        #region GetUserByEmailAsync
         public record UserByEmailRequestModel([Required, EmailAddress] string Email);
         public record UserByEmailResponseModel(Guid Id, string? UserName, string? Email);
         [HttpPost("GetUserByEmail")]
         public async Task<ActionResult<UserByEmailResponseModel>> GetUserByEmailAsync([FromBody] UserByEmailRequestModel requestModel)
         {
-            if (!this.ModelState.IsValid)
-            {
-                return this.BadRequest(this.ModelState);
-            }
-
             User? user = await this._userService.GetUserByEmailAsync(requestModel.Email);
             if (user == null)
             {
@@ -39,5 +33,6 @@ namespace TicketApp.Controllers
             UserByEmailResponseModel responseModel = new UserByEmailResponseModel(user.Id, user.UserName, user.Email);
             return this.Ok(responseModel);
         }
+        #endregion
     }
 }
