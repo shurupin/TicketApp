@@ -1,10 +1,8 @@
 ## Production:
 https://ticketcloud.azurewebsites.net/
 
-## Locally:
-- Full App: https://localhost:7087/
-- Swagger UI: https://localhost:7087/swagger/index.html
-- Frontend Only: http://localhost:3000/
+## Frontend Template:
+https://material-kit-pro-react.devias.io/
 
 ## Install:
 - [ASP.NET Core Runtime 8.0.0-rc.2 Hosting Bundle](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
@@ -18,9 +16,14 @@ https://ticketcloud.azurewebsites.net/
 ## Run app locally:
 1. Navigate to frontend folder:
     - `cd C:\code\TicketApp\TicketApp\ClientApp`
-2. Run Frontend app on http://localhost:3000/:
+2. And run Frontend app on http://localhost:3000/:
     - `yarn dev`
 3. In VS2022 in Debug click https_debug to run Backend app on https://localhost:7087/
+
+## Local URLs:
+- Full App: https://localhost:7087/
+- Swagger UI: https://localhost:7087/swagger/index.html
+- Frontend Only: http://localhost:3000/
 
 ## [IMPORTANT] Before commit and push:
 1. If you did any frontend changes, then you have to update output folder (`C:\code\TicketApp\TicketApp\ClientApp\out`) for production and commit changes:
