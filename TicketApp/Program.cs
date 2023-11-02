@@ -13,7 +13,8 @@ namespace TicketApp
     {
         public static void Main(string[] args)
         {
-            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(args: args);
+            IConfiguration configuration = builder.Configuration;
 
             // Add services to the container.
 
@@ -23,11 +24,13 @@ namespace TicketApp
             builder.Services.AddSwaggerGen();
 
             // Authentication and authorization
-            builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme);
+            builder.Services.AddAuthentication().AddBearerToken(authenticationScheme: IdentityConstants.BearerScheme);
             builder.Services.AddAuthorizationBuilder();
 
-            // Database TODO: apply postgres:
-            //builder.Services.AddDbContext<AppDbContext>(x => x.UseSqlite("DataSource=app.db"));
+            // Database
+            builder.Services.AddDbContext<AppDbContext>(
+                optionsAction: optionsAction => optionsAction.UseNpgsql(
+                    connectionString: configuration.GetConnectionString(name: "DefaultConnection")));
 
             // Add Registration and Authorization API Endpoints
             builder.Services.AddIdentityCore<User>()
@@ -35,7 +38,7 @@ namespace TicketApp
                 .AddApiEndpoints();
 
             // Step 1: Add Next.js hosting support
-            builder.Services.Configure<NextjsStaticHostingOptions>(builder.Configuration.GetSection("NextjsStaticHosting"));
+            builder.Services.Configure<NextjsStaticHostingOptions>(config: builder.Configuration.GetSection(key: "NextjsStaticHosting"));
             builder.Services.AddNextjsStaticHosting();
 
             WebApplication app = builder.Build();

@@ -3,7 +3,7 @@ namespace TicketApp.Controllers
     using Microsoft.AspNetCore.Mvc;
 
     [ApiController]
-    [Route("[controller]")]
+    [Route(template: "[controller]")]
     public class WeatherForecastController : ControllerBase
     {
         private static readonly string[] Summaries = new[]
@@ -21,11 +21,11 @@ namespace TicketApp.Controllers
         [HttpGet(Name = "GetWeatherForecast")]
         public IEnumerable<WeatherForecast> Get()
         {
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
+            return Enumerable.Range(start: 1, count: 5).Select(selector: index => new WeatherForecast
             {
-                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+                Date = DateOnly.FromDateTime(dateTime: DateTime.Now.AddDays(value: index)),
+                TemperatureC = Random.Shared.Next(minValue: -20, maxValue: 55),
+                Summary = Summaries[Random.Shared.Next(maxValue: Summaries.Length)]
             })
             .ToArray();
         }
