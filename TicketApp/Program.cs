@@ -1,4 +1,4 @@
-namespace TicketApp
+﻿namespace TicketApp
 {
     using Configurations;
 

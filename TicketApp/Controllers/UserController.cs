@@ -1,5 +1,6 @@
 namespace TicketApp.Controllers
 {
+    using Mapster;
     using Microsoft.AspNetCore.Mvc;
     using Models.Database;
     using System.ComponentModel.DataAnnotations;
@@ -20,7 +21,7 @@ namespace TicketApp.Controllers
 
         #region GetUserByEmailAsync
         public record UserByEmailRequestModel([Required, EmailAddress] string Email);
-        public record UserByEmailResponseModel(Guid Id, string? UserName, string? Email);
+        public record UserByEmailResponseModel(Guid Id, string? UserName, string? Email, bool EmailConfirmed);
         [HttpPost("GetUserByEmail")]
         public async Task<ActionResult<UserByEmailResponseModel>> GetUserByEmailAsync([FromBody] UserByEmailRequestModel requestModel)
         {
@@ -30,7 +31,7 @@ namespace TicketApp.Controllers
                 return this.NotFound();
             }
 
-            UserByEmailResponseModel responseModel = new UserByEmailResponseModel(user.Id, user.UserName, user.Email);
+            UserByEmailResponseModel responseModel = user.Adapt<UserByEmailResponseModel>();
             return this.Ok(responseModel);
         }
         #endregion
