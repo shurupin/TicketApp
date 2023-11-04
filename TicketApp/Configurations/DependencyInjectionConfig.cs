@@ -13,26 +13,26 @@
             services.AddServices();
         }
 
-        internal static IServiceCollection AddServices(this IServiceCollection services) =>
-            services
+        internal static IServiceCollection AddServices(this IServiceCollection services)
+        {
+            return services
                 .AddServices(interfaceType: typeof(ITransientService), lifetime: ServiceLifetime.Transient)
                 .AddServices(interfaceType: typeof(IScopedService), lifetime: ServiceLifetime.Scoped)
                 .AddServices(interfaceType: typeof(ISingletonService), lifetime: ServiceLifetime.Singleton);
+        }
 
         internal static IServiceCollection AddServices(this IServiceCollection services, Type interfaceType, ServiceLifetime lifetime)
         {
             var interfaceTypes =
                 AppDomain.CurrentDomain.GetAssemblies()
                     .SelectMany(selector: s => s.GetTypes())
-                    .Where(predicate: t => interfaceType.IsAssignableFrom(c: t)
-                        && t.IsClass && !t.IsAbstract)
+                    .Where(predicate: t => interfaceType.IsAssignableFrom(c: t) && t.IsClass && !t.IsAbstract)
                     .Select(selector: t => new
                     {
-                        Service = t.GetInterfaces().FirstOrDefault(),
+                        Service = t.GetInterfaces().FirstOrDefault(i => i != interfaceType && !i.IsGenericType),
                         Implementation = t
                     })
-                    .Where(predicate: t => t.Service is not null
-                        && interfaceType.IsAssignableFrom(c: t.Service));
+                    .Where(predicate: t => t.Service is not null && interfaceType.IsAssignableFrom(c: t.Service));
 
             foreach (var type in interfaceTypes)
             {

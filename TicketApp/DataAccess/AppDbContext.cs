@@ -9,6 +9,7 @@
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options: options)
         {
         }
+        public DbSet<Product> Products { get; set; }
 
         //protected override void OnModelCreating(ModelBuilder modelBuilder)
         //{
