@@ -9,7 +9,7 @@
         {
             if (!context.ModelState.IsValid)
             {
-                context.Result = new BadRequestObjectResult(context.ModelState);
+                context.Result = new BadRequestObjectResult(modelState: context.ModelState);
             }
         }
     }

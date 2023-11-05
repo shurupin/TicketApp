@@ -29,7 +29,7 @@
                     .Where(predicate: t => interfaceType.IsAssignableFrom(c: t) && t.IsClass && !t.IsAbstract)
                     .Select(selector: t => new
                     {
-                        Service = t.GetInterfaces().FirstOrDefault(i => i != interfaceType && !i.IsGenericType),
+                        Service = t.GetInterfaces().FirstOrDefault(predicate: i => i != interfaceType && !i.IsGenericType),
                         Implementation = t
                     })
                     .Where(predicate: t => t.Service is not null && interfaceType.IsAssignableFrom(c: t.Service));

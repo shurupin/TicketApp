@@ -5,14 +5,15 @@
     using Models.Database;
 
     using Services;
+    using TicketApp.Models.Dto;
 
     [ApiController]
     [Route(template: "[controller]")]
-    public class ProductController : BaseController<Product>
+    public class ProductController : BaseController<Product, ProductResponseModel, ProductListResponseModel>
     {
         private readonly IProductService _productService;
 
-        public ProductController(IProductService productService) : base(productService)
+        public ProductController(IProductService productService) : base(baseService: productService)
         {
             this._productService = productService;
         }

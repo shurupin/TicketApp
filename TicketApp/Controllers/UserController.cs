@@ -22,17 +22,17 @@ namespace TicketApp.Controllers
         #region GetUserByEmailAsync
         public record UserByEmailRequestModel([Required, EmailAddress] string Email);
         public record UserByEmailResponseModel(Guid Id, string? UserName, string? Email, bool EmailConfirmed);
-        [HttpPost("GetUserByEmail")]
+        [HttpPost(template: "GetUserByEmail")]
         public async Task<ActionResult<UserByEmailResponseModel>> GetUserByEmailAsync([FromBody] UserByEmailRequestModel requestModel)
         {
-            User? user = await this._userService.GetUserByEmailAsync(requestModel.Email);
+            User? user = await this._userService.GetUserByEmailAsync(email: requestModel.Email);
             if (user == null)
             {
                 return this.NotFound();
             }
 
             UserByEmailResponseModel responseModel = user.Adapt<UserByEmailResponseModel>();
-            return this.Ok(responseModel);
+            return this.Ok(value: responseModel);
         }
         #endregion
     }

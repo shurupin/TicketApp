@@ -20,12 +20,12 @@
 
         public async Task<User?> GetUserByEmailAsync(string email)
         {
-            if (string.IsNullOrWhiteSpace(email) && new EmailAddressAttribute().IsValid(email))
+            if (string.IsNullOrWhiteSpace(value: email) && new EmailAddressAttribute().IsValid(value: email))
             {
-                throw new ArgumentException("Email cannot be null or empty", nameof(email));
+                throw new ArgumentException(message: "Email cannot be null or empty", paramName: nameof(email));
             }
 
-            User? user = await this._repository.GetAsync<User>(x => x.Email.ToLower() == email.ToLower());
+            User? user = await this._repository.GetAsync<User>(condition: x => x.Email.ToLower() == email.ToLower());
             return user;
         }
     }

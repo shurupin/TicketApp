@@ -6,78 +6,83 @@
 
     using TicketApp.Services;
 
-    public interface IBaseController<T>
+    public interface IBaseController<TDbEntity, TResponseModel, TListResponseModel>
     {
-        Task<ActionResult<List<T>>> Get(string filters = "", string range = "", string sort = "");
-        Task<ActionResult<T>> Get(Guid id);
-        Task<ActionResult<T>> Put(T entity);
-        Task<ActionResult<T>> Post(T entity);
-        Task<ActionResult<T>> Delete(Guid id);
+        Task<ActionResult<List<TListResponseModel>>> Get(string filters = "", string range = "", string sort = "");
+        Task<ActionResult<TResponseModel>> Get(Guid id);
+        /// <summary> Update </summary>
+        Task<ActionResult<TResponseModel>> Put(TDbEntity entity);
+        /// <summary> Create </summary>
+        Task<ActionResult<TResponseModel>> Post(TDbEntity entity);
+        Task<ActionResult<bool?>> Delete(Guid id);
     }
 
     [ApiController]
     [Route(template: "[controller]")]
-    public abstract class BaseController<T> : ControllerBase, IBaseController<T> where T : class, new()
+    public abstract class BaseController<TDbEntity, TResponseModel, TListResponseModel>
+        : ControllerBase, IBaseController<TDbEntity, TResponseModel, TListResponseModel> where TDbEntity : class, new()
     {
-        protected readonly IBaseService<T> _baseService;
+        protected readonly IBaseService<TDbEntity, TResponseModel, TListResponseModel> _baseService;
 
-        public BaseController(IBaseService<T> baseService)
+        public BaseController(IBaseService<TDbEntity, TResponseModel, TListResponseModel> baseService)
         {
             this._baseService = baseService;
         }
 
-        [HttpDelete("{id}")]
-        public virtual async Task<ActionResult<T>> Delete(Guid id)
+        [HttpDelete(template: "{id}")]
+        public virtual async Task<ActionResult<bool?>> Delete(Guid id)
         {
-            T entity = await this._baseService.Delete(id);
-            if (entity == null)
+            bool? isFoundAndDeleted = await this._baseService.Delete(id: id);
+            if (isFoundAndDeleted == null)
             {
                 return this.NotFound();
             }
 
-            return this.Ok(entity);
+            return this.Ok(value: isFoundAndDeleted);
         }
 
         //{"Category":"read"}
         [HttpGet]
-        public virtual async Task<ActionResult<List<T>>> Get(string filters = "", string range = "", string sort = "")
+        public virtual async Task<ActionResult<List<TListResponseModel>>> Get(string filters = "", string range = "", string sort = "")
         {
-            EntityList<T> result = await this._baseService.Get(filters, range, sort);
-            this.Response.Headers.Add("Access-Control-Expose-Headers", "Content-Range");
-            this.Response.Headers.Add("Content-Range", $"{typeof(T).Name.ToLower()} {result.From}-{result.To}/{result.Count}");
-            return result.List;
+            EntityList<TListResponseModel> result = await this._baseService.Get(filters: filters, range: range, sort: sort);
+            this.Response.Headers.Add(key: "Access-Control-Expose-Headers", value: "Content-Range");
+            this.Response.Headers.Add(key: "Content-Range", value: $"{typeof(TDbEntity).Name.ToLower()} {result.From}-{result.To}/{result.Count}");
+            return this.Ok(value: result.List);
         }
 
-        [HttpGet("{id}")]
-        public virtual async Task<ActionResult<T>> Get(Guid id)
+        [HttpGet(template: "{id}")]
+        public virtual async Task<ActionResult<TResponseModel>> Get(Guid id)
         {
-            T entity = await this._baseService.Get(id);
+            TResponseModel? responseModel = await this._baseService.Get(id: id);
 
-            if (entity == null)
+            if (responseModel == null)
             {
                 return this.NotFound();
             }
 
-            return entity;
+            return this.Ok(value: responseModel);
         }
 
+        /// <summary> Create </summary>
         [HttpPost]
-        public virtual async Task<ActionResult<T>> Post(T entity)
+        public virtual async Task<ActionResult<TResponseModel>> Post(TDbEntity entity)
         {
-            T result = await this._baseService.Create(entity);
-            return this.Ok(result);
+            TResponseModel responseModel = await this._baseService.Create(entity: entity);
+            return this.Ok(value: responseModel);
         }
 
-        [HttpPut("{id}")]
-        public virtual async Task<ActionResult<T>> Put(T entity)
+        /// <summary> Update </summary>
+        [HttpPut]
+        public virtual async Task<ActionResult<TResponseModel>> Put(TDbEntity entity)
         {
-            T result = await this._baseService.Update(entity);
-            if (result == null)
+            TResponseModel? responseModel = await this._baseService.Update(entity: entity);
+            if (responseModel == null)
             {
                 return this.NotFound();
             }
 
-            return this.Ok(result);
+            return this.Ok(value: responseModel);
         }
     }
 }

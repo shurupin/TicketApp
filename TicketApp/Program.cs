@@ -21,7 +21,7 @@
             IConfiguration configuration = builder.Configuration;
 
             // Add services to the container.
-            builder.Services.AddControllers(options =>
+            builder.Services.AddControllers(configure: options =>
             {
                 options.Filters.Add<ValidateModelStateAttribute>();
             });

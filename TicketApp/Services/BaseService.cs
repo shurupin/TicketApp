@@ -1,5 +1,6 @@
 ﻿namespace TicketApp.Services
 {
+    using Mapster;
     using Microsoft.EntityFrameworkCore;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
@@ -8,17 +9,18 @@
     using TanvirArjel.EFCore.GenericRepository;
     using TicketApp.Extensions;
 
-    public interface IBaseService<T>
+    public interface IBaseService<TDbEntity, TResponseModel, TListResponseModel>
     {
-        Task<EntityList<T>> Get(string filters = "", string range = "", string sort = "");
-        Task<T> Get(Guid id);
-        Task<T> Update(T entity);
-        Task<T> Create(T entity);
-        Task<T> Delete(Guid id);
+        Task<EntityList<TListResponseModel>> Get(string filters = "", string range = "", string sort = "");
+        Task<TResponseModel?> Get(Guid id);
+        Task<TResponseModel?> Update(TDbEntity entity);
+        Task<TResponseModel> Create(TDbEntity entity);
+        Task<bool?> Delete(Guid id);
     }
-    public record EntityList<T>(List<T> List, int Count, int From, int To);
+    public record EntityList<TListResponseModel>(List<TListResponseModel> List, int Count, int From, int To);
 
-    public abstract class BaseService<T> : IBaseService<T> where T : class, new()
+    public abstract class BaseService<TDbEntity, TResponseModel, TListResponseModel>
+        : IBaseService<TDbEntity, TResponseModel, TListResponseModel> where TDbEntity : class, new()
     {
         protected readonly IRepository _repository;
 
@@ -28,32 +30,32 @@
         }
 
         //{"Category":"read"}
-        public virtual async Task<EntityList<T>> Get(string filters = "", string range = "", string sort = "")
+        public virtual async Task<EntityList<TListResponseModel>> Get(string filters = "", string range = "", string sort = "")
         {
-            IQueryable<T> entityQuery = this._repository.GetQueryable<T>();
+            IQueryable<TDbEntity> entityQuery = this._repository.GetQueryable<TDbEntity>();
 
             if (filters.IsNotNullAndNotWhiteSpace())
             {
-                JObject parsedFilters = JObject.Parse(filters);
-                Dictionary<string, PropertyInfo> properties = typeof(T).GetProperties().ToDictionary(p => p.Name, p => p);
+                JObject parsedFilters = JObject.Parse(json: filters);
+                Dictionary<string, PropertyInfo> properties = typeof(TDbEntity).GetProperties().ToDictionary(keySelector: p => p.Name, elementSelector: p => p);
                 foreach (KeyValuePair<string, JToken> filter in parsedFilters)
                 {
                     string key = filter.Key.FirstLetterToUpper();
-                    if (properties.TryGetValue(key, out PropertyInfo? propertyInfo))
+                    if (properties.TryGetValue(key: key, value: out PropertyInfo? propertyInfo))
                     {
-                        object value = Convert.ChangeType(filter.Value, propertyInfo.PropertyType);
+                        object value = Convert.ChangeType(value: filter.Value, conversionType: propertyInfo.PropertyType);
                         if (propertyInfo.PropertyType == typeof(string))
                         {
-                            entityQuery = entityQuery.Where($"{propertyInfo.Name}.Contains(@0)", value);
+                            entityQuery = entityQuery.Where(predicate: $"{propertyInfo.Name}.Contains(@0)", args: value);
                         }
                         else if (propertyInfo.PropertyType == typeof(DateTime))
                         {
                             DateTime date = (DateTime)value;
-                            entityQuery = entityQuery.Where($"{propertyInfo.Name} == @0", date.ToUniversalTime());
+                            entityQuery = entityQuery.Where(predicate: $"{propertyInfo.Name} == @0", args: date.ToUniversalTime());
                         }
                         else
                         {
-                            entityQuery = entityQuery.Where($"{propertyInfo.Name} == @0", value);
+                            entityQuery = entityQuery.Where(predicate: $"{propertyInfo.Name} == @0", args: value);
                         }
                     }
                 }
@@ -62,88 +64,84 @@
 
             if (sort.IsNotNullAndNotWhiteSpace())
             {
-                List<string> sortVal = JsonConvert.DeserializeObject<List<string>>(sort);
+                List<string> sortVal = JsonConvert.DeserializeObject<List<string>>(value: sort);
                 string condition = sortVal.First();
                 string order = sortVal.Last() == "ASC" ? "" : "descending";
-                entityQuery = entityQuery.OrderBy($"{condition} {order}");
+                entityQuery = entityQuery.OrderBy(ordering: $"{condition} {order}");
             }
 
             int from = 0;
             int to = 0;
             if (range.IsNotNullAndNotWhiteSpace())
             {
-                List<int> rangeVal = JsonConvert.DeserializeObject<List<int>>(range);
+                List<int> rangeVal = JsonConvert.DeserializeObject<List<int>>(value: range);
                 from = rangeVal.First();
                 to = rangeVal.Last();
-                entityQuery = entityQuery.Skip<T>(from).Take<T>(to - from + 1);
+                entityQuery = entityQuery.Skip<TDbEntity>(count: from).Take<TDbEntity>(count: to - from + 1);
             }
 
-            List<T> entityList = await entityQuery.ToListAsync();
-            EntityList<T> result = new EntityList<T>(entityList, count, from, to);
+            List<TDbEntity> entityList = await entityQuery.ToListAsync();
+            List<TListResponseModel> listResponseModel = entityList.Adapt<List<TListResponseModel>>();
+            EntityList<TListResponseModel> result = new EntityList<TListResponseModel>(List: listResponseModel, Count: count, From: from, To: to);
             return result;
         }
 
-        public virtual async Task<T> Get(Guid id)
+        public virtual async Task<TResponseModel?> Get(Guid id)
         {
-            T entity = await this._repository.GetByIdAsync<T>(id);
-            return entity;
+            TDbEntity? entity = await this._repository.GetByIdAsync<TDbEntity?>(id: id);
+            TResponseModel responseModel = entity.Adapt<TResponseModel>();
+            return responseModel;
         }
 
-        public virtual async Task<T> Update(T entity)
+        public virtual async Task<TResponseModel?> Update(TDbEntity entity)
         {
-            Guid entityId = (Guid)typeof(T).GetProperty("Id").GetValue(entity);
-            if (Guid.Empty == entityId)
+            Guid entityId = (Guid)typeof(TDbEntity).GetProperty(name: "Id").GetValue(obj: entity);
+            if (Guid.Empty == entityId || !await this.EntityExists(id: entityId))
             {
-                return null;
+                return default;
             }
 
-            this._repository.Add(entity);
-
-            try
-            {
-                await this._repository.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!await this.EntityExists(entityId))
-                {
-                    return null;
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            T result = await this._repository.GetByIdAsync<T>(entityId);
-            return result;
-        }
-
-        public virtual async Task<T> Create(T entity)
-        {
-            this._repository.Add(entity);
+            this._repository.Add(entity: entity);
             await this._repository.SaveChangesAsync();
-            Guid id = (Guid)typeof(T).GetProperty("Id").GetValue(entity);
-            T result = await this._repository.GetByIdAsync<T>(id);
-            return result;
+            TDbEntity result = await this._repository.GetByIdAsync<TDbEntity>(id: entityId);
+            TResponseModel responseModel = result.Adapt<TResponseModel>();
+            return responseModel;
         }
 
-        public virtual async Task<T> Delete(Guid id)
+        public virtual async Task<TResponseModel> Create(TDbEntity entity)
         {
-            T entity = await this._repository.GetByIdAsync<T>(id);
+            PropertyInfo? idPropertyInfo = typeof(TDbEntity).GetProperty(name: "Id");
+            Guid id = (Guid)idPropertyInfo.GetValue(obj: entity);
+            if (id == Guid.Empty)
+            {
+                id = Guid.NewGuid();
+                idPropertyInfo.SetValue(obj: entity, value: id);
+            }
+
+            this._repository.Add(entity: entity);
+            await this._repository.SaveChangesAsync();
+
+            TDbEntity result = await this._repository.GetByIdAsync<TDbEntity>(id: id);
+            TResponseModel responseModel = result.Adapt<TResponseModel>();
+            return responseModel;
+        }
+
+        public virtual async Task<bool?> Delete(Guid id)
+        {
+            TDbEntity entity = await this._repository.GetByIdAsync<TDbEntity>(id: id);
             if (entity == null)
             {
                 return null;
             }
 
-            this._repository.Remove(entity);
+            this._repository.Remove(entity: entity);
             await this._repository.SaveChangesAsync();
-            return entity;
+            return true;
         }
 
         private async Task<bool> EntityExists(Guid id)
         {
-            return await this._repository.ExistsAsync<T>(entity => (Guid)typeof(T).GetProperty("Id").GetValue(entity) == id);
+            return await this._repository.ExistsAsync<TDbEntity>(condition: entity => (Guid)typeof(TDbEntity).GetProperty("Id").GetValue(entity) == id);
         }
     }
 }
