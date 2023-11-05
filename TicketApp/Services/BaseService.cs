@@ -4,12 +4,13 @@
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
     using System.Linq.Dynamic.Core;
+    using System.Reflection;
     using TanvirArjel.EFCore.GenericRepository;
     using TicketApp.Extensions;
 
     public interface IBaseService<T>
     {
-        Task<EntityList<T>> Get(string filter = "", string range = "", string sort = "");
+        Task<EntityList<T>> Get(string filters = "", string range = "", string sort = "");
         Task<T> Get(Guid id);
         Task<T> Update(T entity);
         Task<T> Create(T entity);
@@ -27,23 +28,33 @@
         }
 
         //{"Category":"read"}
-        public virtual async Task<EntityList<T>> Get(string filter = "", string range = "", string sort = "")
+        public virtual async Task<EntityList<T>> Get(string filters = "", string range = "", string sort = "")
         {
             IQueryable<T> entityQuery = this._repository.GetQueryable<T>();
 
-            if (filter.IsNotNullAndNotWhiteSpace())
+            if (filters.IsNotNullAndNotWhiteSpace())
             {
-                JObject filterVal = (JObject)JsonConvert.DeserializeObject(filter);
-                T entity = new T();
-                foreach (KeyValuePair<string, JToken> filterKeyValue in filterVal)
+                JObject parsedFilters = JObject.Parse(filters);
+                Dictionary<string, PropertyInfo> properties = typeof(T).GetProperties().ToDictionary(p => p.Name, p => p);
+                foreach (KeyValuePair<string, JToken> filter in parsedFilters)
                 {
-                    if (entity.GetType().GetProperty(filterKeyValue.Key).PropertyType == typeof(string))
+                    string key = filter.Key.FirstLetterToUpper();
+                    if (properties.TryGetValue(key, out PropertyInfo? propertyInfo))
                     {
-                        entityQuery = entityQuery.Where($"{filterKeyValue.Key}.Contains(@0)", filterKeyValue.Value.ToString());
-                    }
-                    else
-                    {
-                        entityQuery = entityQuery.Where($"{filterKeyValue.Key} == @0", filterKeyValue.Value.ToString());
+                        object value = Convert.ChangeType(filter.Value, propertyInfo.PropertyType);
+                        if (propertyInfo.PropertyType == typeof(string))
+                        {
+                            entityQuery = entityQuery.Where($"{propertyInfo.Name}.Contains(@0)", value);
+                        }
+                        else if (propertyInfo.PropertyType == typeof(DateTime))
+                        {
+                            DateTime date = (DateTime)value;
+                            entityQuery = entityQuery.Where($"{propertyInfo.Name} == @0", date.ToUniversalTime());
+                        }
+                        else
+                        {
+                            entityQuery = entityQuery.Where($"{propertyInfo.Name} == @0", value);
+                        }
                     }
                 }
             }

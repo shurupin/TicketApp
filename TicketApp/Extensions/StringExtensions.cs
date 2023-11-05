@@ -6,5 +6,13 @@
         {
             return !string.IsNullOrWhiteSpace(str);
         }
+
+        public static string FirstLetterToUpper(this string str)
+        {
+            if (string.IsNullOrEmpty(str))
+                return str;
+
+            return char.ToUpper(str.First()) + str.Substring(1);
+        }
     }
 }

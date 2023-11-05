@@ -8,7 +8,7 @@
 
     public interface IBaseController<T>
     {
-        Task<ActionResult<List<T>>> Get(string filter = "", string range = "", string sort = "");
+        Task<ActionResult<List<T>>> Get(string filters = "", string range = "", string sort = "");
         Task<ActionResult<T>> Get(Guid id);
         Task<ActionResult<T>> Put(T entity);
         Task<ActionResult<T>> Post(T entity);
@@ -40,9 +40,9 @@
 
         //{"Category":"read"}
         [HttpGet]
-        public virtual async Task<ActionResult<List<T>>> Get(string filter = "", string range = "", string sort = "")
+        public virtual async Task<ActionResult<List<T>>> Get(string filters = "", string range = "", string sort = "")
         {
-            EntityList<T> result = await this._baseService.Get(filter, range, sort);
+            EntityList<T> result = await this._baseService.Get(filters, range, sort);
             this.Response.Headers.Add("Access-Control-Expose-Headers", "Content-Range");
             this.Response.Headers.Add("Content-Range", $"{typeof(T).Name.ToLower()} {result.From}-{result.To}/{result.Count}");
             return result.List;
