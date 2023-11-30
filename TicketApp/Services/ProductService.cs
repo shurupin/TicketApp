@@ -5,11 +5,11 @@
     using TanvirArjel.EFCore.GenericRepository;
     using TicketApp.Models.Dto;
 
-    public interface IProductService : IBaseService<Product, ProductResponseModel, ProductListResponseModel>, ITransientService
+    public interface IProductService : IBaseService<Product, ProductRequestResponseModel, ProductListResponseModel>, ITransientService
     {
     }
 
-    public class ProductService : BaseService<Product, ProductResponseModel, ProductListResponseModel>, IProductService
+    public class ProductService : BaseService<Product, ProductRequestResponseModel, ProductListResponseModel>, IProductService
     {
         private readonly IRepository _repository;
 

@@ -26,6 +26,10 @@ const items = [
             path: paths.dashboard.customers.index
           },
           {
+            title: 'Ticket Products',
+            path: paths.dashboard.ticketProducts.index
+          },
+          {
             title: 'Logistics',
             path: paths.dashboard.logistics.index
           },

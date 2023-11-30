@@ -18,6 +18,7 @@ export const tokens = {
     create: 'nav.create',
     crypto: 'nav.crypto',
     customers: 'nav.customers',
+    ticketProducts: 'nav.ticketProducts',
     dashboard: 'nav.dashboard',
     details: 'nav.details',
     ecommerce: 'nav.ecommerce',

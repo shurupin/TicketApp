@@ -9,7 +9,7 @@
 
     [ApiController]
     [Route(template: "[controller]")]
-    public class ProductController : BaseController<Product, ProductResponseModel, ProductListResponseModel>
+    public class ProductController : BaseController<Product, ProductRequestResponseModel, ProductListResponseModel>
     {
         private readonly IProductService _productService;
 

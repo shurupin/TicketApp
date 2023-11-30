@@ -2,6 +2,7 @@
 {
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.AspNetCore.Mvc.Filters;
+    using Microsoft.AspNetCore.Mvc.ModelBinding;
 
     public class ValidateModelStateAttribute : ActionFilterAttribute
     {
@@ -9,7 +10,16 @@
         {
             if (!context.ModelState.IsValid)
             {
-                context.Result = new BadRequestObjectResult(modelState: context.ModelState);
+                Dictionary<string, List<string>> errors = new Dictionary<string, List<string>>();
+                foreach (KeyValuePair<string, ModelStateEntry> entry in context.ModelState)
+                {
+                    List<string> fieldErrors = entry.Value.Errors.Select(error => error.ErrorMessage).ToList();
+                    if (fieldErrors.Any())
+                    {
+                        errors[entry.Key] = fieldErrors;
+                    }
+                }
+                context.Result = new BadRequestObjectResult(errors);
             }
         }
     }

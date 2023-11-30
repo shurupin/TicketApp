@@ -111,6 +111,29 @@ export const getSections = (t) => [
         ]
       },
       {
+        title: t(tokens.nav.ticketProducts),
+        path: paths.dashboard.ticketProducts.index,
+        icon: (
+          <SvgIcon fontSize="small">
+            <Users03Icon />
+          </SvgIcon>
+        ),
+        items: [
+          {
+            title: t(tokens.nav.list),
+            path: paths.dashboard.ticketProducts.index
+          },
+          {
+            title: t(tokens.nav.details),
+            path: paths.dashboard.ticketProducts.details
+          },
+          {
+            title: t(tokens.nav.edit),
+            path: paths.dashboard.ticketProducts.edit
+          }
+        ]
+      },
+      {
         title: t(tokens.nav.productList),
         path: paths.dashboard.products.index,
         icon: (

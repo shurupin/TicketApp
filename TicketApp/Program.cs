@@ -55,6 +55,14 @@
 
             WebApplication app = builder.Build();
 
+            // Apply migrations to the latest
+            using (IServiceScope scope = app.Services.CreateScope())
+            {
+                AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                dbContext.Database.Migrate();
+                DatabaseSeeder.SeedTestData(dbContext);
+            }
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {

@@ -68,6 +68,11 @@ export const paths = {
       details: '/dashboard/customers/:customerId',
       edit: '/dashboard/customers/:customerId/edit'
     },
+    ticketProducts: {
+      index: '/dashboard/ticketProducts',
+      details: '/dashboard/ticketProducts/:ticketProductId',
+      edit: '/dashboard/ticketProducts/:ticketProductId/edit'
+    },
     ecommerce: '/dashboard/ecommerce',
     fileManager: '/dashboard/file-manager',
     invoices: {

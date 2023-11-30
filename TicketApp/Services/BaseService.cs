@@ -6,21 +6,23 @@
     using Newtonsoft.Json.Linq;
     using System.Linq.Dynamic.Core;
     using System.Reflection;
+
     using TanvirArjel.EFCore.GenericRepository;
     using TicketApp.Extensions;
 
-    public interface IBaseService<TDbEntity, TResponseModel, TListResponseModel>
+    public interface IBaseService<TDbEntity, TRequestResponseModel, TListResponseModel>
     {
         Task<EntityList<TListResponseModel>> Get(string filters = "", string range = "", string sort = "");
-        Task<TResponseModel?> Get(Guid id);
-        Task<TResponseModel?> Update(TDbEntity entity);
-        Task<TResponseModel> Create(TDbEntity entity);
+        Task<TRequestResponseModel?> Get(Guid id);
+        void BeforeUpdate(TRequestResponseModel requestModel, TDbEntity entity);
+        Task<TRequestResponseModel?> Update(TRequestResponseModel requestModel);
+        void BeforeCreate(TRequestResponseModel requestModel, TDbEntity entity);
+        Task<TRequestResponseModel> Create(TRequestResponseModel requestModel);
         Task<bool?> Delete(Guid id);
     }
     public record EntityList<TListResponseModel>(List<TListResponseModel> List, int Count, int From, int To);
 
-    public abstract class BaseService<TDbEntity, TResponseModel, TListResponseModel>
-        : IBaseService<TDbEntity, TResponseModel, TListResponseModel> where TDbEntity : class, new()
+    public abstract class BaseService<TDbEntity, TRequestResponseModel, TListResponseModel> : IBaseService<TDbEntity, TRequestResponseModel, TListResponseModel> where TDbEntity : class, new()
     {
         protected readonly IRepository _repository;
 
@@ -86,43 +88,70 @@
             return result;
         }
 
-        public virtual async Task<TResponseModel?> Get(Guid id)
+        public virtual async Task<TRequestResponseModel?> Get(Guid id)
         {
             TDbEntity? entity = await this._repository.GetByIdAsync<TDbEntity?>(id: id);
-            TResponseModel responseModel = entity.Adapt<TResponseModel>();
+            TRequestResponseModel responseModel = entity.Adapt<TRequestResponseModel>();
             return responseModel;
         }
 
-        public virtual async Task<TResponseModel?> Update(TDbEntity entity)
+        public void BeforeUpdate(TRequestResponseModel requestModel, TDbEntity entity)
         {
-            Guid entityId = (Guid)typeof(TDbEntity).GetProperty(name: "Id").GetValue(obj: entity);
-            if (Guid.Empty == entityId || !await this.EntityExists(id: entityId))
+            PropertyInfo? updatedAtPropertyInfo = typeof(TDbEntity).GetProperty(name: "UpdatedAt");
+            if (updatedAtPropertyInfo != null)
+            {
+                updatedAtPropertyInfo.SetValue(obj: entity, value: DateTime.UtcNow);
+            }
+        }
+
+        public virtual async Task<TRequestResponseModel?> Update(TRequestResponseModel requestModel)
+        {
+            PropertyInfo idPropertyInfo = typeof(TRequestResponseModel).GetProperty(name: "Id")!;
+            Guid id = (Guid)idPropertyInfo.GetValue(obj: requestModel)!;
+            if (id == Guid.Empty)
+            {
+                return default;
+            }
+            TDbEntity? existedEntity = await this._repository.GetByIdAsync<TDbEntity?>(id: id);
+            if (existedEntity == null)
             {
                 return default;
             }
 
-            this._repository.Add(entity: entity);
+            TDbEntity entity = requestModel.Adapt<TRequestResponseModel, TDbEntity>(existedEntity);
+            this.BeforeUpdate(requestModel, entity);
+            await this._repository.AddAsync(entity: entity);
             await this._repository.SaveChangesAsync();
-            TDbEntity result = await this._repository.GetByIdAsync<TDbEntity>(id: entityId);
-            TResponseModel responseModel = result.Adapt<TResponseModel>();
+            TDbEntity result = await this._repository.GetByIdAsync<TDbEntity>(id: id);
+            TRequestResponseModel responseModel = result.Adapt<TRequestResponseModel>();
             return responseModel;
         }
 
-        public virtual async Task<TResponseModel> Create(TDbEntity entity)
+        public virtual void BeforeCreate(TRequestResponseModel requestModel, TDbEntity entity)
         {
-            PropertyInfo? idPropertyInfo = typeof(TDbEntity).GetProperty(name: "Id");
-            Guid id = (Guid)idPropertyInfo.GetValue(obj: entity);
+            PropertyInfo? createdAtPropertyInfo = typeof(TDbEntity).GetProperty(name: "CreatedAt");
+            if (createdAtPropertyInfo != null)
+            {
+                createdAtPropertyInfo.SetValue(obj: entity, value: DateTime.UtcNow);
+            }
+        }
+
+        public virtual async Task<TRequestResponseModel> Create(TRequestResponseModel requestModel)
+        {
+            PropertyInfo idPropertyInfo = typeof(TRequestResponseModel).GetProperty(name: "Id")!;
+            Guid id = (Guid)idPropertyInfo.GetValue(obj: requestModel)!;
             if (id == Guid.Empty)
             {
                 id = Guid.NewGuid();
-                idPropertyInfo.SetValue(obj: entity, value: id);
+                idPropertyInfo.SetValue(obj: requestModel, value: id);
             }
 
-            this._repository.Add(entity: entity);
+            TDbEntity entity = requestModel.Adapt<TDbEntity>();
+            this.BeforeCreate(requestModel, entity);
+            await this._repository.AddAsync(entity: entity);
             await this._repository.SaveChangesAsync();
-
             TDbEntity result = await this._repository.GetByIdAsync<TDbEntity>(id: id);
-            TResponseModel responseModel = result.Adapt<TResponseModel>();
+            TRequestResponseModel responseModel = result.Adapt<TRequestResponseModel>();
             return responseModel;
         }
 

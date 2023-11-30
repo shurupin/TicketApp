@@ -5,7 +5,7 @@
     public class Product : IGuid
     {
         public Guid Id { get; set; }
-        public List<string> Attributes { get; set; }
+        public List<string>? Attributes { get; set; }
         public string Category { get; set; }
         public DateTime CreatedAt { get; set; }
         public string Currency { get; set; }

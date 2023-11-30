@@ -17,6 +17,7 @@ export const en = {
   [tokens.nav.create]: 'Create',
   [tokens.nav.crypto]: 'Crypto',
   [tokens.nav.customers]: 'Customers',
+  [tokens.nav.ticketProducts]: 'Ticket Products',
   [tokens.nav.dashboard]: 'Dashboard',
   [tokens.nav.details]: 'Details',
   [tokens.nav.ecommerce]: 'E-Commerce',
